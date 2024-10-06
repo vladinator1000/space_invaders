@@ -49,8 +49,11 @@ fn spawn_aliens(
         Alien,
         RigidBody::Dynamic,
         Collider::circle(5.0),
+        Restitution::new(0.2),
+        Mass(200.0),
+        LinearVelocity(Vec2::new(50.0, 0.0)),
+        Health(3),
         sprite_bundle,
-        LinearVelocity(Vec2::new(100.0, 0.0)),
       ));
     }
   }
@@ -73,3 +76,6 @@ fn update_aliens(
     }
   }
 }
+
+#[derive(Component)]
+pub struct Health(pub u32);

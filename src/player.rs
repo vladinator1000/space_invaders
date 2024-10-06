@@ -2,7 +2,12 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use crate::{input::Action, resolution::Resolution, SPACING};
+use crate::{
+  alien::{Alien, Health},
+  input::Action,
+  resolution::Resolution,
+  SPACING,
+};
 
 pub struct PlayerPlugin;
 
@@ -11,7 +16,7 @@ impl Plugin for PlayerPlugin {
     app
       .add_plugins(InputManagerPlugin::<Action>::default())
       .add_systems(Startup, spawn_player)
-      .add_systems(Update, (move_player, shoot));
+      .add_systems(Update, (move_player, shoot, deal_damage));
   }
 }
 
@@ -45,6 +50,7 @@ fn spawn_player(
     Collider::circle(5.0),
     LinearVelocity(Vec2::ZERO),
     sprite,
+    Health(1),
   ));
 }
 
@@ -91,8 +97,40 @@ fn shoot(
       Missile,
       RigidBody::Dynamic,
       Collider::circle(2.0),
+      Restitution::new(0.8),
       LinearVelocity(Vec2::new(0.0, MISSILE_SPEED)),
       sprite,
+      Health(3),
     ));
+  }
+}
+
+fn deal_damage(
+  mut commands: Commands,
+  mut alien_query: Query<(Entity, &mut Health, &CollidingEntities), With<Alien>>,
+  mut missile_query: Query<&mut Health, (With<Missile>, Without<Alien>)>,
+) {
+  for (alien_entity, mut alien_health, colliding_entities) in &mut alien_query {
+    for colliding_entity in colliding_entities.iter() {
+      let colliding_entity = *colliding_entity;
+
+      if let Ok(mut missile_health) = missile_query.get_mut(colliding_entity) {
+        if alien_health.0 > 0 {
+          alien_health.0 -= 1;
+        }
+
+        if alien_health.0 <= 0 {
+          commands.entity(alien_entity).despawn();
+        }
+
+        if missile_health.0 > 0 {
+          missile_health.0 -= 1;
+        }
+
+        if missile_health.0 <= 0 {
+          commands.entity(colliding_entity).despawn();
+        }
+      }
+    }
   }
 }

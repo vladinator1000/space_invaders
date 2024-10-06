@@ -40,7 +40,9 @@ fn main() {
       resolution::ResolutionPlugin,
       alien::AlienPlugin,
       player::PlayerPlugin,
-      PhysicsPlugins::default(),
+      // Add physics plugins and specify a units-per-meter scaling factor, 1 meter = 20 pixels.
+      // The unit allows the engine to tune its parameters for the scale of the world, improving stability.
+      PhysicsPlugins::default().with_length_unit(20.0),
       // PhysicsDebugPlugin::default(),
     ))
     .insert_resource(Gravity(Vec2::ZERO))
